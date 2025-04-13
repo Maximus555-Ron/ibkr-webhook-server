@@ -27,11 +27,13 @@ def webhook():
     contract = Stock(symbol, 'SMART', 'USD')
     order = LimitOrder(action, quantity, price)
 
-    try:
-        ib.qualifyContracts(contract)
-        ib.placeOrder(contract, order)
-    except Exception as e:
-        print(f"Order error: {e}")
+   try:
+    ib.qualifyContracts(contract)
+    trade = ib.placeOrder(contract, order)
+    ib.sleep(1)  # Allow time for IBKR to process the order
+    print(f"✅ Placed {action} order for {symbol} at {price}")
+except Exception as e:
+    print(f"🚨 Order error: {e}")
 
     return f"Executed {action} {symbol} @ {price}", 200
 
