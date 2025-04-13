@@ -4,10 +4,10 @@ from ib_insync import *
 
 app = Flask(__name__)
 
-# === Connect to Trader Workstation (TWS) or IB Gateway ===
+# === Connect to TWS or IB Gateway ===
 ib = IB()
 try:
-    ib.connect('127.0.0.1', 7497, clientId=1)  # For paper trading
+    ib.connect('127.0.0.1', 7497, clientId=1)
 except Exception as e:
     print(f"API connection failed: {e}")
 
@@ -19,18 +19,17 @@ def webhook():
     symbol = data.get('symbol')
     action = data.get('signal').upper()
     price = float(data.get('price'))
-    quantity = 10  # Set your preferred trade size
+    quantity = 10  # Default trade size
 
     print(f"📡 Received signal: {action} {symbol} at {price}")
 
-    # Prepare order
     contract = Stock(symbol, 'SMART', 'USD')
     order = LimitOrder(action, quantity, price)
 
     try:
-        ib.qualifyContracts(contract)
-        trade = ib.placeOrder(contract, order)
-        ib.sleep(1)  # Allow time for IBKR to process the order
+        ib.run(ib.qualifyContractsAsync(contract))  # FIXED ✅
+        ib.run(ib.placeOrder(contract, order))      # FIXED ✅
+        ib.sleep(1)  # Let it process
         print(f"✅ Placed {action} order for {symbol} at {price}")
     except Exception as e:
         print(f"🚨 Order error: {e}")
@@ -38,5 +37,5 @@ def webhook():
     return f"Executed {action} {symbol} @ {price}", 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
