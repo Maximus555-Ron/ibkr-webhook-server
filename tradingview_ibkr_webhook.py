@@ -4,33 +4,33 @@ from ib_insync import *
 
 app = Flask(__name__)
 
-# === Connect to TWS or IB Gateway ===
+# === Connect to TWS / IB Gateway ===
 ib = IB()
 try:
     ib.connect('127.0.0.1', 7497, clientId=1)
 except Exception as e:
-    print(f"API connection failed: {e}")
+    print(f"🚨 API connection failed: {e}")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
 
-    # Extract fields from TradingView
+    # Extract fields
     symbol = data.get('symbol')
     action = data.get('signal').upper()
     price = float(data.get('price'))
-    quantity = 10  # Default trade size
+    quantity = 10
 
-    print(f"📡 Received signal: {action} {symbol} at {price}")
+    print(f"📡 Signal received: {action} {symbol} @ {price}")
 
     contract = Stock(symbol, 'SMART', 'USD')
     order = LimitOrder(action, quantity, price)
 
     try:
-        ib.run(ib.qualifyContractsAsync(contract))  # FIXED ✅
-        ib.run(ib.placeOrder(contract, order))      # FIXED ✅
-        ib.sleep(1)  # Let it process
-        print(f"✅ Placed {action} order for {symbol} at {price}")
+        ib.qualifyContracts(contract)              # ✅ Fully synchronous
+        trade = ib.placeOrder(contract, order)     # ✅ Fully synchronous
+        ib.sleep(1)
+        print(f"✅ Order placed: {action} {symbol} @ {price}")
     except Exception as e:
         print(f"🚨 Order error: {e}")
 
